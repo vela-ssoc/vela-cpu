@@ -1,16 +1,32 @@
 package cpu
 
 import (
-	"fmt"
+	"encoding/json"
+	"github.com/vela-ssoc/vela-kit/kind"
 	"github.com/vela-ssoc/vela-kit/lua"
 )
 
-func (sum *summary) String() string                         { return fmt.Sprintf("%p", sum) }
+func (sum *summary) String() string                         { return lua.B2S(sum.Byte()) }
 func (sum *summary) Type() lua.LValueType                   { return lua.LTObject }
 func (sum *summary) AssertFloat64() (float64, bool)         { return 0, false }
 func (sum *summary) AssertString() (string, bool)           { return "", false }
 func (sum *summary) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (sum *summary) Peek() lua.LValue                       { return sum }
+
+func (sum *summary) Byte() []byte {
+	enc := kind.NewJsonEncoder()
+	enc.Tab("")
+	enc.KV("arch", sum.Arch)
+	enc.KV("num", sum.Num)
+	enc.KV("pcnt", sum.PCnt)
+	enc.KV("vendor", sum.Vendor)
+	enc.KV("model_name", sum.ModelName)
+
+	raw, _ := json.Marshal(sum.Info)
+	enc.Raw("info", raw)
+	enc.End("}")
+	return enc.Bytes()
+}
 
 func (sum *summary) Index(L *lua.LState, key string) lua.LValue {
 	switch key {

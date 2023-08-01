@@ -2,8 +2,10 @@ package cpu
 
 import (
 	"github.com/shirou/gopsutil/cpu"
+	"github.com/vela-ssoc/vela-kit/lua"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type snapshot struct {
@@ -60,4 +62,21 @@ func (sum *summary) updateCnt() bool {
 
 	sum.PCnt = cnt
 	return true
+}
+
+func (sum *summary) Percent(L *lua.LState) int {
+	pre := L.IsTrue(1)
+	pct, err := cpu.Percent(1*time.Second, pre)
+	if err != nil {
+		L.RaiseError("call pct fail %v", err)
+	}
+
+	n := len(pct)
+	s := lua.NewSlice(n)
+
+	for i := 0; i < n; i++ {
+		s.Set(i, lua.LNumber(pct[i]))
+	}
+	L.Push(s)
+	return 1
 }
